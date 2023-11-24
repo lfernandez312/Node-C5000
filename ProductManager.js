@@ -1,62 +1,115 @@
+const fs = require('fs');
+
 //CONSIGNA Realizar una clase “ProductManager” que gestione un conjunto de productos.
 class ProductManager {
-  //Debe crearse desde su constructor con el elemento products, el cual será un arreglo vacío.
-  constructor() {
-    this.products = [];
-    this.productIdCounter = 1;
-  }
-  //Cada producto que gestione debe contar con las propiedades:- title (nombre del producto)- description (descripción del producto)- price (precio)- thumbnail (ruta de imagen)- code (código identificador)- stock (número de piezas disponibles)
-  addProduct(title, description, price, thumbnail, code, stock) {
-    if (!title || !description || !price || !thumbnail || !code || !stock) {
-      console.error("Todos los campos son obligatorios.");
-      return;
+    constructor(filePath) {
+        //Debe crearse desde su constructor con el elemento products, el cual será un arreglo vacío.
+        this.products = [];
+        this.productIdCounter = 1;
+        this.path = filePath;
+
+        if (filePath) {
+            this.loadFromFile(filePath);
+        }
+    }
+    //Cada producto que gestione debe contar con las propiedades:- title (nombre del producto)- description (descripción del producto)- price (precio)- thumbnail (ruta de imagen)- code (código identificador)- stock (número de piezas disponibles)
+    addProduct(product) {
+        product.id = this.productIdCounter++;
+        this.products.push(product);
+        this.saveToFile();
+        console.log("Producto agregado:", product);
     }
 
-    // Validar que no se repita el campo "code"
-    const codeExists = this.products.some((product) => product.code === code);
-    if (codeExists) {
-      console.error("Ya existe un producto con el mismo código.");
-      return;
+    getProducts() {
+        this.loadFromFile();
+        return this.products;
     }
 
-    const newProduct = {
-      id: this.productIdCounter++, //Al agregarlo, debe crearse con un id autoincrementable  
-      title,
-      description,
-      price,
-      thumbnail,
-      code,
-      stock,
-    };
+    getProductById(id) {
+        this.loadFromFile();
 
-    this.products.push(newProduct);
-    console.log("Producto agregado:", newProduct);
-  }
+        const product = this.products.find((product) => product.id === id);
 
-  //Debe contar con un método “getProducts” el cual debe devolver el arreglo con todos los productos creados hasta ese momento
-  getProducts() {
-    return this.products;
-  }
-  //Debe contar con un método “getProductById” el cual debe buscar en el arreglo el producto que coincida con el id
-  getProductById(id) {
-    const product = this.products.find((product) => product.id === id);
-
-    if (product) {
-      return product;
-    } else {
-      console.error("Not found"); //En caso de no coincidir ningún id, mostrar en consola un error “Not found”  
+        if (product) {
+            return product;
+        } else {
+            console.error("Not found");
+        }
     }
-  }
+
+    updateProduct(id, updatedProduct) {
+        this.loadFromFile();
+
+        const index = this.products.findIndex((product) => product.id === id);
+
+        if (index !== -1) {
+            // Mantengo el ID original
+            updatedProduct.id = id;
+            this.products[index] = updatedProduct;
+            this.saveToFile();
+            console.log("Producto actualizado:", updatedProduct);
+        } else {
+            console.error("Not found");
+        }
+    }
+
+    deleteProduct(id) {
+        this.loadFromFile();
+
+        const index = this.products.findIndex((product) => product.id === id);
+
+        if (index !== -1) {
+            const deletedProduct = this.products.splice(index, 1)[0];
+            this.saveToFile();
+            console.log("Producto eliminado:", deletedProduct);
+        } else {
+            console.error("Not found");
+        }
+    }
+
+    saveToFile() {
+        const data = JSON.stringify(this.products, null, 2);
+        fs.writeFileSync(this.path, data);
+        console.log(`Productos guardados en ${this.path}`);
+    }
+
+    loadFromFile() {
+        try {
+            const data = fs.readFileSync(this.path, 'utf8');
+            this.products = JSON.parse(data);
+            console.log(`Productos cargados desde ${this.path}`);
+        } catch (error) {
+            console.error('Error al cargar productos desde el archivo:', error.message);
+        }
+    }
 }
 
-const productManager = new ProductManager();
+// Uso la nueva variable path al crear una instancia de ProductManager
+const productManager = new ProductManager('productos.json');
 
-productManager.addProduct("producto prueba", "Este es un producto prueba", 200, "Sin imagen", "abc123", 25);
+// uso del método addProduct
+productManager.addProduct({
+    title: "Producto de ejemplo",
+    description: "Descripción del producto de ejemplo",
+    price: 150,
+    thumbnail: "ruta/imagen/ejemplo.jpg",
+    code: "abc123",
+    stock: 10,
+});
 
-const allProducts = productManager.getProducts();
-console.log("Todos los productos:", allProducts);
+//uso del método updateProduct
+productManager.updateProduct(1, {
+    title: "Producto Actualizado",
+    description: "Nueva descripción del producto",
+    price: 200,
+    thumbnail: "ruta/imagen/actualizada.jpg",
+    code: "xyz789",
+    stock: 5,
+});
 
-const productById = productManager.getProductById(1);
-console.log("Producto por ID:", productById);
+//uso del método deleteProduct
+productManager.deleteProduct(1);
 
-const nonExistentProduct = productManager.getProductById(3); // Producto no encontrado
+//uso del método getProducts después de actualizar y eliminar
+const updatedProducts = productManager.getProducts();
+console.log("Productos después de actualizar y eliminar:", updatedProducts);
