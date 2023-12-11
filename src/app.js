@@ -16,8 +16,8 @@ app.get('/', (req, res) => {
 app.get(`${urlProducts}`, async (req, res) => {
     try {
         const limit = req.query.limit;
-        const productos = await productManager.getProducts(limit);
-        res.json({ productos });
+        const products = await productManager.getProducts(limit);
+        res.json({ products });
     } catch (error) {
         if (error.code === 'ENOENT') {
             res.status(404).json({ error: 'El archivo productos.json no existe, ejecute primero el archivo ProductManager.js para crear productos' });
