@@ -1,19 +1,23 @@
 import express from 'express';
-import { promises as fs } from 'fs';
+import ProductManager from './ProductManager.js';
 
 const app = express();
 const port = 8080;
 const urlProducts = '/products';
-const productosJsonPath = 'productos.json';
+
+// Instanciamos la clase ProductManager
+const productManager = new ProductManager('productos.json');
+
+app.get('/', (req, res) => {
+    res.send('Bienvenido a la API');
+});
 
 // Obtener todos los productos o limitar por el parámetro de consulta 'limit'
-app.get(urlProducts, async (req, res) => {
+app.get(`${urlProducts}`, async (req, res) => {
     try {
-        const data = await fs.readFile(productosJsonPath, 'utf8');
-        const allProducts = JSON.parse(data);
-        const limit = req.query.limit ? parseInt(req.query.limit, 10) : undefined;
-        const products = limit ? allProducts.slice(0, limit) : allProducts;
-        res.json(products);
+        const limit = req.query.limit;
+        const productos = await productManager.getProducts(limit);
+        res.json({ productos });
     } catch (error) {
         if (error.code === 'ENOENT') {
             res.status(404).json({ error: 'El archivo productos.json no existe, ejecute primero el archivo ProductManager.js para crear productos' });
@@ -27,9 +31,7 @@ app.get(urlProducts, async (req, res) => {
 app.get(`${urlProducts}/:pid`, async (req, res) => {
     try {
         const productId = parseInt(req.params.pid, 10);
-        const data = await fs.readFile(productosJsonPath, 'utf8');
-        const allProducts = JSON.parse(data);
-        const product = allProducts.find((p) => p.id === productId);
+        const product = await productManager.getProductById(productId);
 
         if (product) {
             res.json(product);
