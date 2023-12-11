@@ -113,6 +113,8 @@ class ProductManager {
     }
 }
 
+export default ProductManager;
+
 // Crear una instancia de la clase ProductManager con el nombre del archivo
 const productManager = new ProductManager('productos.json');
 
@@ -133,6 +135,4 @@ async function initializeProducts() {
 // Ejecutar la función de inicialización y luego las operaciones de ejemplo
 (async () => {
     await initializeProducts();
-
-    // Resto del código (ejemplo de uso de los métodos de la clase)
 })();
